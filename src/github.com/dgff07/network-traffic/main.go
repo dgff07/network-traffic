@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"strconv"
-	"sync"
-	"time"
+
+	"github.com/dgff07/network-traffic/src/github.com/dgff07/network-traffic/network"
 )
 
 const (
@@ -47,11 +46,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	networkTraffic := make(map[string][]string)
-	var mutex sync.Mutex
+	netService := network.BuildNetworkService()
 
 	for _, port := range ports {
-		go captureTraffic(port, bufferSize, &networkTraffic, &mutex)
+		netService.CaptureTraffic(port, bufferSize)
 	}
 
 	select {}
@@ -86,53 +84,4 @@ func validatePorts(ports []string) bool {
 	}
 
 	return true
-}
-
-func captureTraffic(port string, bufferSize int, networkTraffic *map[string][]string, mutex *sync.Mutex) {
-	listener, err := net.Listen("tcp", ":"+port)
-	if err != nil {
-		fmt.Println("Error starting listener:", err)
-		return
-	}
-	defer listener.Close()
-
-	fmt.Printf("Listening on port %s\n", port)
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Println("Error accepting connection:", err)
-			continue
-		}
-		remoteAddr := conn.RemoteAddr().String()
-		fromIP, _, _ := net.SplitHostPort(remoteAddr)
-
-		currentDate := getCurrentDateTimeFormatted()
-
-		networkInfo := fmt.Sprintf("From %s to %s at %s", fromIP, port, currentDate)
-
-		// Lock the mutex before accessing the map
-		mutex.Lock()
-
-		// Append the network info to the slice
-		(*networkTraffic)[port] = append((*networkTraffic)[port], networkInfo)
-
-		// Check if the buffer size is exceeded and wrap around if needed
-		if len((*networkTraffic)[port]) > bufferSize {
-			(*networkTraffic)[port] = (*networkTraffic)[port][1:]
-		}
-
-		fmt.Println(networkTraffic)
-
-		// Unlock the mutex after updating the map
-		mutex.Unlock()
-
-		conn.Close()
-	}
-}
-
-func getCurrentDateTimeFormatted() string {
-	currentTime := time.Now()
-	formattedDateTime := currentTime.Format("2006-01-02 15:04:05.000")
-	return formattedDateTime
 }

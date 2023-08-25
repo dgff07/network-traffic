@@ -1,3 +1,3 @@
-module github.com/dgff07/network-record
+module github.com/dgff07/network-traffic
 
 go 1.20
