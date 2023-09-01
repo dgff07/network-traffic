@@ -27,8 +27,8 @@ type NetworkInfo struct {
 }
 
 type NetworkService struct {
-	NetworkTrafficChan chan NetworkInfo
-	BufferSize         int
+	networkTrafficChan chan NetworkInfo
+	bufferSize         int
 	netTraffic         NetworkTraffic
 	mutex              sync.RWMutex
 }
@@ -36,8 +36,8 @@ type NetworkService struct {
 func BuildNetworkService(bs int) NetworkRecorder {
 
 	return &NetworkService{
-		NetworkTrafficChan: make(chan NetworkInfo),
-		BufferSize:         bs,
+		networkTrafficChan: make(chan NetworkInfo),
+		bufferSize:         bs,
 		netTraffic:         make(NetworkTraffic),
 	}
 }
@@ -55,15 +55,15 @@ func (ns *NetworkService) SaveNetworkTraffic(netInfo *NetworkInfo) {
 }
 
 func (ns *NetworkService) GetChannel() chan NetworkInfo {
-	return ns.NetworkTrafficChan
+	return ns.networkTrafficChan
 }
 
 func (ns *NetworkService) GetBufferSize() int {
-	return ns.BufferSize
+	return ns.bufferSize
 }
 
 func (ns *NetworkService) CaptureTraffic(port string, bufferSize int) {
-	go captureTrafficRoutine(port, ns.NetworkTrafficChan)
+	go captureTrafficRoutine(port, ns.networkTrafficChan)
 }
 
 func captureTrafficRoutine(port string, trafficChan chan NetworkInfo) {
@@ -107,5 +107,5 @@ func getCurrentDateTimeFormatted() string {
 }
 
 func (ns *NetworkService) Close() {
-	close(ns.NetworkTrafficChan)
+	close(ns.networkTrafficChan)
 }
