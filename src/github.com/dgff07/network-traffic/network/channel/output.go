@@ -88,12 +88,16 @@ func (of *OutputFactory) GetOutput(id int) (OutputWriter, error) {
 	switch id {
 	case Console:
 		output = &consoleOutput{}
+		break
 	case Memory:
 		output = &memoryOutput{}
+		break
 	case WebSocket:
 		output = &webSocketOutput{}
+		break
 	case Kafka:
 		output = &kafkaOutput{}
+		break
 	default:
 		return nil, fmt.Errorf("There is no output kind with id '%d'", id)
 	}
