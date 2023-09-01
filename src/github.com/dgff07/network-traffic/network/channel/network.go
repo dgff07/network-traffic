@@ -70,6 +70,8 @@ func captureTrafficRoutine(port string, trafficChan chan NetworkInfo) {
 			continue
 		}
 		remoteAddr := conn.RemoteAddr().String()
+		conn.Close()
+
 		fromIP, _, _ := net.SplitHostPort(remoteAddr)
 
 		currentDate := getCurrentDateTimeFormatted()
@@ -82,8 +84,6 @@ func captureTrafficRoutine(port string, trafficChan chan NetworkInfo) {
 			info: networkInfo,
 		}
 		trafficChan <- chanVal
-
-		conn.Close()
 	}
 }
 
