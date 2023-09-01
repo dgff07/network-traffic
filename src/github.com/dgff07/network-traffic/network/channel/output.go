@@ -3,17 +3,18 @@ package channel
 import (
 	"fmt"
 	"os"
+	"sync"
 )
 
 const (
 	Console   = 0
 	Memory    = 1
-	Websocket = 2
+	WebSocket = 2
 	Kafka     = 3
 )
 
 type OutputWriter interface {
-	write(ns *NetworkService)
+	Write(ns *NetworkService)
 }
 
 type ConsoleOutput struct{}
@@ -24,7 +25,19 @@ type KafkaOutput struct{}
 
 type WebSocketOutput struct{}
 
-func (o *ConsoleOutput) write(ns *NetworkService) {
+type OutputFactory struct {
+	instances map[int]OutputWriter
+	mutex     sync.Mutex
+}
+
+func NewOutputFactory() *OutputFactory {
+	return &OutputFactory{
+		instances: make(map[int]OutputWriter),
+	}
+}
+
+func (o *ConsoleOutput) Write(ns *NetworkService) {
+
 	go func(ns *NetworkService) {
 		for {
 			netInfo := <-ns.NetworkTrafficChan
@@ -33,7 +46,7 @@ func (o *ConsoleOutput) write(ns *NetworkService) {
 	}(ns)
 }
 
-func (o *MemoryOutput) write(ns *NetworkService) {
+func (o *MemoryOutput) Write(ns *NetworkService) {
 	go func(ns *NetworkService) {
 		for {
 			netInfo := <-ns.NetworkTrafficChan
@@ -51,27 +64,38 @@ func (o *MemoryOutput) write(ns *NetworkService) {
 
 }
 
-func (o *WebSocketOutput) write(ns *NetworkService) {
+func (o *WebSocketOutput) Write(ns *NetworkService) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
 
-func (o *KafkaOutput) write(ns *NetworkService) {
+func (o *KafkaOutput) Write(ns *NetworkService) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
 
-func GetOutput(id int) (OutputWriter, error) {
-	switch id {
-	case 0:
-		return &ConsoleOutput{}, nil
-	case 1:
-		return &MemoryOutput{}, nil
-	case 2:
-		return &WebSocketOutput{}, nil
-	case 3:
-		return &KafkaOutput{}, nil
+func (of *OutputFactory) GetOutput(id int) (OutputWriter, error) {
+	of.mutex.Lock()
+	defer of.mutex.Unlock()
+
+	if _, ok := of.instances[id]; ok {
+		return nil, fmt.Errorf("There is already a output writer with the id '%d'", id)
 	}
 
-	return nil, fmt.Errorf("There is no output kind with id '%d'", id)
+	var output OutputWriter
+	switch id {
+	case Console:
+		output = &ConsoleOutput{}
+	case Memory:
+		output = &MemoryOutput{}
+	case WebSocket:
+		output = &WebSocketOutput{}
+	case Kafka:
+		output = &KafkaOutput{}
+	default:
+		return nil, fmt.Errorf("There is no output kind with id '%d'", id)
+	}
+
+	of.instances[id] = output
+	return output, nil
 }

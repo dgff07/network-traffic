@@ -46,13 +46,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	netService, err := channel.BuildNetworkService(bufferSize, channel.Memory)
+	netService := channel.BuildNetworkService(bufferSize)
+
+	outFactory := channel.NewOutputFactory()
+	outConsole, err := outFactory.GetOutput(channel.Console)
 	if err != nil {
-		fmt.Println("An error occurred on building the network service:", err)
+		fmt.Println("An error occurred ", err)
+		os.Exit(1)
+	}
+	outMemory, err := outFactory.GetOutput(channel.Memory)
+	if err != nil {
+		fmt.Println("An error occurred ", err)
 		os.Exit(1)
 	}
 
-	netService.InitChannelReader()
+	outConsole.Write(netService.(*channel.NetworkService))
+	outMemory.Write(netService.(*channel.NetworkService))
 
 	for _, port := range ports {
 		netService.CaptureTraffic(port, bufferSize)

@@ -14,7 +14,6 @@ type NetworkTraffic map[string][]string
 
 type NetworkRecorder interface {
 	CaptureTraffic(string, int)
-	InitChannelReader()
 }
 
 // Used to pass info through the channel
@@ -27,26 +26,15 @@ type NetworkService struct {
 	NetworkTrafficChan chan NetworkInfo
 	BufferSize         int
 	NetworkTraffic
-	OutputWriter
 }
 
-func BuildNetworkService(bs int, outputId int) (NetworkRecorder, error) {
-	output, err := GetOutput(outputId)
-
-	if err != nil {
-		return nil, err
-	}
+func BuildNetworkService(bs int) NetworkRecorder {
 
 	return &NetworkService{
-		NetworkTrafficChan: make(chan NetworkInfo, bs),
+		NetworkTrafficChan: make(chan NetworkInfo),
 		BufferSize:         bs,
 		NetworkTraffic:     make(NetworkTraffic),
-		OutputWriter:       output,
-	}, nil
-}
-
-func (ns *NetworkService) InitChannelReader() {
-	ns.OutputWriter.write(ns)
+	}
 }
 
 func (ns *NetworkService) CaptureTraffic(port string, bufferSize int) {
