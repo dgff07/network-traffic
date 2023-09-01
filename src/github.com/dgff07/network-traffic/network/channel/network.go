@@ -49,11 +49,11 @@ func appendNetworkData(ns *NetworkService) {
 	for {
 		netInfo := <-ns.NetworkTrafficChan
 
-		(ns.NetworkTraffic)[netInfo.port] = append((ns.NetworkTraffic)[netInfo.port], netInfo.info)
+		ns.NetworkTraffic[netInfo.port] = append(ns.NetworkTraffic[netInfo.port], netInfo.info)
 
 		// Check if the buffer size is exceeded and wrap around if needed
-		if len((ns.NetworkTraffic)[netInfo.port]) > ns.BufferSize {
-			(ns.NetworkTraffic)[netInfo.port] = (ns.NetworkTraffic)[netInfo.port][1:]
+		if len(ns.NetworkTraffic[netInfo.port]) > ns.BufferSize {
+			ns.NetworkTraffic[netInfo.port] = ns.NetworkTraffic[netInfo.port][1:]
 		}
 
 		fmt.Println(ns.NetworkTraffic)
