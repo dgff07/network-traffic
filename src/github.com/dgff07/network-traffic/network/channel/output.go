@@ -17,13 +17,13 @@ type OutputWriter interface {
 	Write(ns NetworkRecorder)
 }
 
-type ConsoleOutput struct{}
+type consoleOutput struct{}
 
-type MemoryOutput struct{}
+type memoryOutput struct{}
 
-type KafkaOutput struct{}
+type kafkaOutput struct{}
 
-type WebSocketOutput struct{}
+type webSocketOutput struct{}
 
 type OutputFactory struct {
 	instances map[int]OutputWriter
@@ -36,7 +36,7 @@ func NewOutputFactory() *OutputFactory {
 	}
 }
 
-func (o *ConsoleOutput) Write(ns NetworkRecorder) {
+func (o *consoleOutput) Write(ns NetworkRecorder) {
 
 	go func(ns NetworkRecorder) {
 		for {
@@ -46,7 +46,7 @@ func (o *ConsoleOutput) Write(ns NetworkRecorder) {
 	}(ns)
 }
 
-func (o *MemoryOutput) Write(ns NetworkRecorder) {
+func (o *memoryOutput) Write(ns NetworkRecorder) {
 	go func(ns NetworkRecorder) {
 		for {
 			netInfo := <-ns.GetChannel()
@@ -66,12 +66,12 @@ func (o *MemoryOutput) Write(ns NetworkRecorder) {
 
 }
 
-func (o *WebSocketOutput) Write(ns NetworkRecorder) {
+func (o *webSocketOutput) Write(ns NetworkRecorder) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
 
-func (o *KafkaOutput) Write(ns NetworkRecorder) {
+func (o *kafkaOutput) Write(ns NetworkRecorder) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
@@ -87,13 +87,13 @@ func (of *OutputFactory) GetOutput(id int) (OutputWriter, error) {
 	var output OutputWriter
 	switch id {
 	case Console:
-		output = &ConsoleOutput{}
+		output = &consoleOutput{}
 	case Memory:
-		output = &MemoryOutput{}
+		output = &memoryOutput{}
 	case WebSocket:
-		output = &WebSocketOutput{}
+		output = &webSocketOutput{}
 	case Kafka:
-		output = &KafkaOutput{}
+		output = &kafkaOutput{}
 	default:
 		return nil, fmt.Errorf("There is no output kind with id '%d'", id)
 	}
