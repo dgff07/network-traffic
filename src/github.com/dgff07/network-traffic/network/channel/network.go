@@ -14,6 +14,9 @@ type NetworkTraffic map[string][]string
 
 type NetworkRecorder interface {
 	CaptureTraffic(string, int)
+	GetChannel() chan NetworkInfo
+	GetBufferSize() int
+	GetNetworkMemoryMap() NetworkTraffic
 }
 
 // Used to pass info through the channel
@@ -35,6 +38,18 @@ func BuildNetworkService(bs int) NetworkRecorder {
 		BufferSize:         bs,
 		NetworkTraffic:     make(NetworkTraffic),
 	}
+}
+
+func (ns *NetworkService) GetChannel() chan NetworkInfo {
+	return ns.NetworkTrafficChan
+}
+
+func (ns *NetworkService) GetBufferSize() int {
+	return ns.BufferSize
+}
+
+func (ns *NetworkService) GetNetworkMemoryMap() NetworkTraffic {
+	return ns.NetworkTraffic
 }
 
 func (ns *NetworkService) CaptureTraffic(port string, bufferSize int) {

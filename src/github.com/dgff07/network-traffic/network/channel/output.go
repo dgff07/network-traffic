@@ -14,7 +14,7 @@ const (
 )
 
 type OutputWriter interface {
-	Write(ns *NetworkService)
+	Write(ns NetworkRecorder)
 }
 
 type ConsoleOutput struct{}
@@ -36,40 +36,42 @@ func NewOutputFactory() *OutputFactory {
 	}
 }
 
-func (o *ConsoleOutput) Write(ns *NetworkService) {
+func (o *ConsoleOutput) Write(ns NetworkRecorder) {
 
-	go func(ns *NetworkService) {
+	go func(ns NetworkRecorder) {
 		for {
-			netInfo := <-ns.NetworkTrafficChan
+			netInfo := <-ns.GetChannel()
 			fmt.Println(netInfo)
 		}
 	}(ns)
 }
 
-func (o *MemoryOutput) Write(ns *NetworkService) {
-	go func(ns *NetworkService) {
+func (o *MemoryOutput) Write(ns NetworkRecorder) {
+	go func(ns NetworkRecorder) {
 		for {
-			netInfo := <-ns.NetworkTrafficChan
+			netInfo := <-ns.GetChannel()
 
-			ns.NetworkTraffic[netInfo.port] = append(ns.NetworkTraffic[netInfo.port], netInfo.info)
+			netMap := ns.GetNetworkMemoryMap()
+
+			netMap[netInfo.port] = append(netMap[netInfo.port], netInfo.info)
 
 			// Check if the buffer size is exceeded and wrap around if needed
-			if len(ns.NetworkTraffic[netInfo.port]) > ns.BufferSize {
-				ns.NetworkTraffic[netInfo.port] = ns.NetworkTraffic[netInfo.port][1:]
+			if len(netMap[netInfo.port]) > ns.GetBufferSize() {
+				netMap[netInfo.port] = netMap[netInfo.port][1:]
 			}
 
-			fmt.Println(ns.NetworkTraffic)
+			fmt.Println(netMap)
 		}
 	}(ns)
 
 }
 
-func (o *WebSocketOutput) Write(ns *NetworkService) {
+func (o *WebSocketOutput) Write(ns NetworkRecorder) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
 
-func (o *KafkaOutput) Write(ns *NetworkService) {
+func (o *KafkaOutput) Write(ns NetworkRecorder) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
