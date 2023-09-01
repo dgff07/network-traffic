@@ -46,9 +46,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	netService := channel.BuildNetworkService(bufferSize)
+	netRec := channel.BuildNetworkService(bufferSize)
 
 	// Test defining different outputs
+	defineOutputs(netRec)
+
+	for _, port := range ports {
+		netRec.CaptureTraffic(port, bufferSize)
+	}
+
+	select {}
+}
+
+func defineOutputs(netRec channel.NetworkRecorder) {
 	outFactory := channel.NewOutputFactory()
 	outConsole, err := outFactory.GetOutput(channel.Console)
 	if err != nil {
@@ -61,14 +71,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	outConsole.Write(netService)
-	outMemory.Write(netService)
-
-	for _, port := range ports {
-		netService.CaptureTraffic(port, bufferSize)
-	}
-
-	select {}
+	outConsole.Write(netRec)
+	outMemory.Write(netRec)
 }
 
 func printHelp() {
