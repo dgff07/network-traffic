@@ -1,6 +1,9 @@
 package channel
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 const (
 	Console   = 0
@@ -51,11 +54,13 @@ func memoryWriter(ns *NetworkService) {
 }
 
 func websocketWriter(ns *NetworkService) {
-
+	fmt.Println("Not implemented yet")
+	os.Exit(1)
 }
 
 func kafkaWriter(ns *NetworkService) {
-
+	fmt.Println("Not implemented yet")
+	os.Exit(1)
 }
 
 func GetOutput(id int) (*Output, error) {
