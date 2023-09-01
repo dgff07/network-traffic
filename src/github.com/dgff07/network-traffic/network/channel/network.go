@@ -27,37 +27,30 @@ type NetworkService struct {
 	NetworkTrafficChan chan NetworkInfo
 	BufferSize         int
 	NetworkTraffic
+	OutputWriter
 }
 
-func BuildNetworkService(bs int) NetworkRecorder {
+func BuildNetworkService(bs int, outputId int) (NetworkRecorder, error) {
+	output, err := GetOutput(outputId)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &NetworkService{
 		NetworkTrafficChan: make(chan NetworkInfo, bs),
 		BufferSize:         bs,
 		NetworkTraffic:     make(NetworkTraffic),
-	}
+		OutputWriter:       output,
+	}, nil
 }
 
 func (ns *NetworkService) InitChannelReader() {
-	go appendNetworkData(ns)
+	ns.OutputWriter.write(ns)
 }
 
 func (ns *NetworkService) CaptureTraffic(port string, bufferSize int) {
 	go captureTrafficRoutine(port, ns.NetworkTrafficChan)
-}
-
-func appendNetworkData(ns *NetworkService) {
-	for {
-		netInfo := <-ns.NetworkTrafficChan
-
-		ns.NetworkTraffic[netInfo.port] = append(ns.NetworkTraffic[netInfo.port], netInfo.info)
-
-		// Check if the buffer size is exceeded and wrap around if needed
-		if len(ns.NetworkTraffic[netInfo.port]) > ns.BufferSize {
-			ns.NetworkTraffic[netInfo.port] = ns.NetworkTraffic[netInfo.port][1:]
-		}
-
-		fmt.Println(ns.NetworkTraffic)
-	}
 }
 
 func captureTrafficRoutine(port string, trafficChan chan NetworkInfo) {

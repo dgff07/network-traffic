@@ -46,7 +46,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	netService := channel.BuildNetworkService(bufferSize)
+	netService, err := channel.BuildNetworkService(bufferSize, channel.Memory)
+	if err != nil {
+		fmt.Println("An error occurred on building the network service:", err)
+		os.Exit(1)
+	}
 
 	netService.InitChannelReader()
 
