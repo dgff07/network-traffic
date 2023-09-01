@@ -1,4 +1,4 @@
-package network
+package mutex
 
 import (
 	"fmt"
