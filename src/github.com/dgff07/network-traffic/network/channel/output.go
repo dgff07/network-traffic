@@ -12,71 +12,65 @@ const (
 	Kafka     = 3
 )
 
-type OutputKind struct {
-	id     int
-	name   string
-	writer func(ns *NetworkService)
-}
-
 type OutputWriter interface {
 	write(ns *NetworkService)
 }
 
-type Output struct {
-	kind *OutputKind
-}
+type ConsoleOutput struct{}
 
-func (o *Output) write(ns *NetworkService) {
-	go o.kind.writer(ns)
-}
+type MemoryOutput struct{}
 
-func consoleWriter(ns *NetworkService) {
-	for {
-		netInfo := <-ns.NetworkTrafficChan
-		fmt.Println(netInfo)
-	}
-}
+type KafkaOutput struct{}
 
-func memoryWriter(ns *NetworkService) {
-	for {
-		netInfo := <-ns.NetworkTrafficChan
+type WebSocketOutput struct{}
 
-		ns.NetworkTraffic[netInfo.port] = append(ns.NetworkTraffic[netInfo.port], netInfo.info)
-
-		// Check if the buffer size is exceeded and wrap around if needed
-		if len(ns.NetworkTraffic[netInfo.port]) > ns.BufferSize {
-			ns.NetworkTraffic[netInfo.port] = ns.NetworkTraffic[netInfo.port][1:]
+func (o *ConsoleOutput) write(ns *NetworkService) {
+	go func(ns *NetworkService) {
+		for {
+			netInfo := <-ns.NetworkTrafficChan
+			fmt.Println(netInfo)
 		}
+	}(ns)
+}
 
-		fmt.Println(ns.NetworkTraffic)
-	}
+func (o *MemoryOutput) write(ns *NetworkService) {
+	go func(ns *NetworkService) {
+		for {
+			netInfo := <-ns.NetworkTrafficChan
+
+			ns.NetworkTraffic[netInfo.port] = append(ns.NetworkTraffic[netInfo.port], netInfo.info)
+
+			// Check if the buffer size is exceeded and wrap around if needed
+			if len(ns.NetworkTraffic[netInfo.port]) > ns.BufferSize {
+				ns.NetworkTraffic[netInfo.port] = ns.NetworkTraffic[netInfo.port][1:]
+			}
+
+			fmt.Println(ns.NetworkTraffic)
+		}
+	}(ns)
 
 }
 
-func websocketWriter(ns *NetworkService) {
+func (o *WebSocketOutput) write(ns *NetworkService) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
 
-func kafkaWriter(ns *NetworkService) {
+func (o *KafkaOutput) write(ns *NetworkService) {
 	fmt.Println("Not implemented yet")
 	os.Exit(1)
 }
 
-func GetOutput(id int) (*Output, error) {
+func GetOutput(id int) (OutputWriter, error) {
 	switch id {
 	case 0:
-		kind := &OutputKind{id: 0, name: "console", writer: consoleWriter}
-		return &Output{kind: kind}, nil
+		return &ConsoleOutput{}, nil
 	case 1:
-		kind := &OutputKind{id: 1, name: "memory", writer: memoryWriter}
-		return &Output{kind: kind}, nil
+		return &MemoryOutput{}, nil
 	case 2:
-		kind := &OutputKind{id: 2, name: "websocket", writer: websocketWriter}
-		return &Output{kind: kind}, nil
+		return &WebSocketOutput{}, nil
 	case 3:
-		kind := &OutputKind{id: 3, name: "kafka", writer: kafkaWriter}
-		return &Output{kind: kind}, nil
+		return &KafkaOutput{}, nil
 	}
 
 	return nil, fmt.Errorf("There is no output kind with id '%d'", id)
