@@ -3,6 +3,7 @@ package channel
 import (
 	"fmt"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -16,7 +17,7 @@ type NetworkRecorder interface {
 	CaptureTraffic(string, int)
 	GetChannel() chan NetworkInfo
 	GetBufferSize() int
-	GetNetworkMemoryMap() NetworkTraffic
+	SaveNetworkTraffic(*NetworkInfo)
 }
 
 // Used to pass info through the channel
@@ -28,7 +29,8 @@ type NetworkInfo struct {
 type NetworkService struct {
 	NetworkTrafficChan chan NetworkInfo
 	BufferSize         int
-	NetworkTraffic
+	netTraffic         NetworkTraffic
+	mutex              sync.RWMutex
 }
 
 func BuildNetworkService(bs int) NetworkRecorder {
@@ -36,8 +38,20 @@ func BuildNetworkService(bs int) NetworkRecorder {
 	return &NetworkService{
 		NetworkTrafficChan: make(chan NetworkInfo),
 		BufferSize:         bs,
-		NetworkTraffic:     make(NetworkTraffic),
+		netTraffic:         make(NetworkTraffic),
 	}
+}
+
+func (ns *NetworkService) SaveNetworkTraffic(netInfo *NetworkInfo) {
+	ns.mutex.Lock() //Lock write
+	defer ns.mutex.Unlock()
+	ns.netTraffic[netInfo.port] = append(ns.netTraffic[netInfo.port], netInfo.info)
+
+	// Check if the buffer size is exceeded and wrap around if needed
+	if len(ns.netTraffic[netInfo.port]) > ns.GetBufferSize() {
+		ns.netTraffic[netInfo.port] = ns.netTraffic[netInfo.port][1:]
+	}
+	fmt.Println(ns.netTraffic)
 }
 
 func (ns *NetworkService) GetChannel() chan NetworkInfo {
@@ -46,10 +60,6 @@ func (ns *NetworkService) GetChannel() chan NetworkInfo {
 
 func (ns *NetworkService) GetBufferSize() int {
 	return ns.BufferSize
-}
-
-func (ns *NetworkService) GetNetworkMemoryMap() NetworkTraffic {
-	return ns.NetworkTraffic
 }
 
 func (ns *NetworkService) CaptureTraffic(port string, bufferSize int) {

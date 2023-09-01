@@ -50,20 +50,9 @@ func (o *memoryOutput) Write(ns NetworkRecorder) {
 	go func(ns NetworkRecorder) {
 		for {
 			netInfo := <-ns.GetChannel()
-
-			netMap := ns.GetNetworkMemoryMap()
-
-			netMap[netInfo.port] = append(netMap[netInfo.port], netInfo.info)
-
-			// Check if the buffer size is exceeded and wrap around if needed
-			if len(netMap[netInfo.port]) > ns.GetBufferSize() {
-				netMap[netInfo.port] = netMap[netInfo.port][1:]
-			}
-
-			fmt.Println(netMap)
+			ns.SaveNetworkTraffic(&netInfo)
 		}
 	}(ns)
-
 }
 
 func (o *webSocketOutput) Write(ns NetworkRecorder) {
