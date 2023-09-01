@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/dgff07/network-traffic/src/github.com/dgff07/network-traffic/network"
+	network "github.com/dgff07/network-traffic/src/github.com/dgff07/network-traffic/network/channel"
 )
 
 const (
@@ -46,7 +46,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	netService := network.BuildNetworkService()
+	netService := network.BuildNetworkService(bufferSize)
+
+	netService.InitChannelReader()
 
 	for _, port := range ports {
 		netService.CaptureTraffic(port, bufferSize)
